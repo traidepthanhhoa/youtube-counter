@@ -1,66 +1,68 @@
-// ====== CẤU HÌNH ======
+// ===== CẤU HÌNH =====
 const API_KEY = "AIzaSyAoC10UTsVyMCq4x57ICfYV_WLeKEx0yrg";
 const CHANNEL_ID = "UCLnX7s80sPp3JdArqyhh3DQ";
 
-// ====== MENU ======
+// ===== MENU =====
 const sidebar = document.getElementById("sidebar");
 const menuBtn = document.getElementById("menuBtn");
 const overlay = document.getElementById("overlay");
 
+// Mở menu
 if (menuBtn) {
     menuBtn.onclick = () => {
         sidebar.classList.add("active");
         overlay.classList.add("active");
+
+        menuBtn.style.opacity = "0";
+        menuBtn.style.pointerEvents = "none";
     };
+}
+
+// Đóng menu
+function closeMenu() {
+    sidebar.classList.remove("active");
+    overlay.classList.remove("active");
+
+    menuBtn.style.opacity = "1";
+    menuBtn.style.pointerEvents = "auto";
 }
 
 if (overlay) {
-    overlay.onclick = () => {
-        sidebar.classList.remove("active");
-        overlay.classList.remove("active");
-    };
+    overlay.onclick = closeMenu;
 }
 
-// ====== LOAD THÔNG TIN KÊNH ======
+document.querySelectorAll("#sidebar a").forEach(link => {
+    link.addEventListener("click", closeMenu);
+});
+
+// ===== API YOUTUBE =====
 async function loadChannel() {
 
     if (!document.getElementById("channelName")) return;
 
-    try {
+    const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${CHANNEL_ID}&key=${API_KEY}`
+    );
 
-        const res = await fetch(
-            `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${CHANNEL_ID}&key=${API_KEY}`
-        );
+    const data = await res.json();
 
-        const data = await res.json();
+    const c = data.items[0];
 
-        if (!data.items || data.items.length === 0) {
-            console.log("Không tìm thấy kênh");
-            return;
-        }
+    document.getElementById("avatar").src =
+        c.snippet.thumbnails.high.url;
 
-        const c = data.items[0];
+    document.getElementById("channelName").innerHTML =
+        c.snippet.title;
 
-        document.getElementById("avatar").src =
-            c.snippet.thumbnails.high.url;
+    document.getElementById("subs").innerHTML =
+        Number(c.statistics.subscriberCount).toLocaleString();
 
-        document.getElementById("channelName").innerHTML =
-            c.snippet.title;
+    document.getElementById("views").innerHTML =
+        Number(c.statistics.viewCount).toLocaleString();
 
-        document.getElementById("subs").innerHTML =
-            Number(c.statistics.subscriberCount).toLocaleString();
-
-        document.getElementById("views").innerHTML =
-            Number(c.statistics.viewCount).toLocaleString();
-
-        document.getElementById("videos").innerHTML =
-            Number(c.statistics.videoCount).toLocaleString();
-
-    } catch (err) {
-        console.error(err);
-    }
+    document.getElementById("videos").innerHTML =
+        Number(c.statistics.videoCount).toLocaleString();
 }
 
 loadChannel();
-
-setInterval(loadChannel,10000);
+setInterval(loadChannel, 10000);
